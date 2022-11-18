@@ -10,10 +10,15 @@ from aiogram.types import ChatActions
 
 
 API_TOKEN = "YOUR TOKEN HERE"
+# ffmpeg binary path
 FFMPEG_PATH = "/home/david/telegram_bot/ffmpeg"
-DOWNLOAD_PATH = "/home/david/telegram_bot/podcast/"
-BAD_KEYWORDS = ["spotify", "ivoox"]
+# download path
+DOWNLOAD_PATH = "/home/david/telegram_bot/downloaded_files/"
+# log path
 LOG_PATH = "/home/david/telegram_bot/log.txt"
+# Spotify not working here. If the link contains spotify, we are bloking it here. Remove spotify for you
+BAD_KEYWORDS = ["spotify", "ivoox"]
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -46,9 +51,9 @@ async def download(message: types.Message):
     # Проверяем на наличие плохих Url-ов у которых проблемы с yt-dlp. Проверяем в тексте сообщения
     bad_keyword_flag = 0
 
-    for badkeyword in BAD_KEYWORDS:
-        for badurl in message.text.split("."):
-            if badkeyword == badurl or len(message.text.split(".")) <= 1:
+    for bad_keyword in BAD_KEYWORDS:
+        for bad_url in message.text.split("."):
+            if bad_keyword == bad_url or len(message.text.split(".")) <= 1:
                 bad_keyword_flag = 1
                 break
     
@@ -95,8 +100,8 @@ async def download(message: types.Message):
                     pass
                     
         # Проверяем что-бы размер файла не превышал 45 МБ. Лимит 50МБ
-        for podcast in glob.glob(f"{DOWNLOAD_PATH}{message.from_user.id}/*.m4a"):
-            file_size = round(os.stat(podcast).st_size / (1024 * 1024))
+        for downloaded_files in glob.glob(f"{DOWNLOAD_PATH}{message.from_user.id}/*.m4a"):
+            file_size = round(os.stat(downloaded_files).st_size / (1024 * 1024))
             if file_size > 45:
                 await message.answer(
                     f"💾 Размер файла : {file_size} MB \ 📦 Фаил превышает допустимый размер \ ✂️ Обрезаю аудиофаил на части \ 💾 File size : {file_size} MB \ 📦 File is over size limit \ ✂️ Cutting in to pieces"
@@ -106,20 +111,20 @@ async def download(message: types.Message):
                     [
                         "mkvmerge",
                         "-o",
-                        f'{DOWNLOAD_PATH}{message.from_user.id}/[%02d] {podcast.split("/")[6]}',
+                        f'{DOWNLOAD_PATH}{message.from_user.id}/[%02d] {downloaded_files.split("/")[6]}',
                         "--split",
                         "45M",
-                        podcast,
+                        downloaded_files,
                     ]
                 )
-                os.remove(podcast)
+                os.remove(downloaded_files)
             else:
                 pass
         
         await message.answer("⬆️ Высылаю аудиофаилы \ ⬆️ Sending Files")
 
-        for podcast in glob.glob(f"{DOWNLOAD_PATH}{message.from_user.id}/*.m4a"):
-            audio_list.append(podcast)
+        for downloaded_files in glob.glob(f"{DOWNLOAD_PATH}{message.from_user.id}/*.m4a"):
+            audio_list.append(downloaded_files)
         audio_list.sort()
 
         for audio_file in audio_list:
@@ -132,3 +137,4 @@ async def download(message: types.Message):
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
+    
